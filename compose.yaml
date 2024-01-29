@@ -1,0 +1,43 @@
+# Use postgres/example user/password credentials
+version: '3.8'
+
+services:
+
+  pgadmin:
+  # https://www.pgadmin.org/docs/pgadmin4/development/container_deployment.html
+    image: dpage/pgadmin4:8.0
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: "admin"
+      PGADMIN_DISABLE_POSTFIX: true
+    ports:
+      - '5445:80'
+    volumes:
+      - ./pgadmin/var-lib-pgadmin:/var/lib/pgadmin #sudo chown -R 5050:5050 <host_directory>
+    networks:
+      - dez
+  db:
+    image: postgres:16.1-bookworm
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5444:5432'
+    volumes:
+      - test-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    networks:
+      - dez
+
+networks:
+  dez: {}
+
+volumes:
+  test-postgres:
+    driver: local
+
+# pgcli -h localhost -p 5444 -u postgres  -d ny_taxi
